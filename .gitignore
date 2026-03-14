@@ -1,0 +1,14 @@
+# Maven build output
+target/
+
+# Eclipse files
+.classpath
+.project
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Database config
+src/main/resources/database.properties
