@@ -8,15 +8,15 @@ import mn.edu.num.assignmentsystem.core.domain.AssignmentStatus;
 import mn.edu.num.assignmentsystem.core.ports.IAssignmentRepository;
 
 /**
- * Assignment-тэй холбоотой бизнес логикыг хариуцах service класс.
+ * Assignment-тэй холбоотой бизнес логикыг хариуцна.
  */
 public class AssignmentService {
 
-    /** Assignment хадгалах repository port */
+    /** Repository interface */
     private final IAssignmentRepository assignmentRepository;
 
     /**
-     * Constructor injection ашиглаж repository-г дамжуулан авна.
+     * Constructor.
      */
     public AssignmentService(IAssignmentRepository assignmentRepository) {
         this.assignmentRepository = assignmentRepository;
@@ -27,10 +27,7 @@ public class AssignmentService {
      */
     public void createAssignment(Assignment assignment) {
         validateBasicFields(assignment);
-
-        // Шинэ assignment үргэлж DRAFT төлөвтэй эхэлнэ
         assignment.setStatus(AssignmentStatus.DRAFT);
-
         assignmentRepository.save(assignment);
     }
 
@@ -47,7 +44,7 @@ public class AssignmentService {
     }
 
     /**
-     * ID-аар assignment устгана.
+     * Assignment устгана.
      */
     public void deleteAssignment(Long id) {
         if (id == null) {
@@ -58,14 +55,14 @@ public class AssignmentService {
     }
 
     /**
-     * Бүх assignment жагсаалтыг буцаана.
+     * Бүх assignment-уудыг авна.
      */
     public List<Assignment> getAllAssignments() {
         return assignmentRepository.findAll();
     }
 
     /**
-     * ID-аар assignment олно.
+     * ID-аар assignment авна.
      */
     public Assignment getAssignmentById(Long id) {
         if (id == null) {
@@ -77,9 +74,7 @@ public class AssignmentService {
 
     /**
      * Assignment-ийг submit хийнэ.
-     * 
-     * Зөвхөн DRAFT -> SUBMITTED төлөв рүү шилжинэ.
-     * Submission date-г тухайн өдрийн огноогоор бөглөнө.
+     * Зөвхөн DRAFT -> SUBMITTED.
      */
     public void submitAssignment(Long id) {
         Assignment assignment = getExistingAssignment(id);
@@ -96,9 +91,14 @@ public class AssignmentService {
 
     /**
      * Assignment-ийг grade хийнэ.
-     * 
-     * Зөвхөн SUBMITTED -> GRADED төлөв рүү шилжинэ.
-     * Оноо заавал өгөгдсөн байна.
+     */
+    public void gradeAssignment(Long id, Double score) {
+        gradeAssignment(id, score, null);
+    }
+
+    /**
+     * Assignment-ийг grade хийнэ.
+     * Зөвхөн SUBMITTED -> GRADED.
      */
     public void gradeAssignment(Long id, Double score, String feedback) {
         Assignment assignment = getExistingAssignment(id);
@@ -120,9 +120,6 @@ public class AssignmentService {
 
     /**
      * Assignment-ийг reject хийнэ.
-     * 
-     * Зөвхөн SUBMITTED -> REJECTED төлөв рүү шилжинэ.
-     * Feedback хоосон байж болохгүй.
      */
     public void rejectAssignment(Long id, String feedback) {
         Assignment assignment = getExistingAssignment(id);
@@ -142,7 +139,7 @@ public class AssignmentService {
     }
 
     /**
-     * Assignment-ийн үндсэн талбаруудыг шалгана.
+     * Үндсэн талбаруудыг шалгана.
      */
     private void validateBasicFields(Assignment assignment) {
         if (assignment == null) {
@@ -163,7 +160,7 @@ public class AssignmentService {
     }
 
     /**
-     * ID-аар assignment авч, байхгүй бол алдаа шиднэ.
+     * ID-аар assignment авч, байхгүй бол алдаа өгнө.
      */
     private Assignment getExistingAssignment(Long id) {
         Assignment assignment = getAssignmentById(id);

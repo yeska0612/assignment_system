@@ -3,14 +3,11 @@ package mn.edu.num.assignmentsystem.core.domain;
 import java.time.LocalDate;
 
 /**
- * Assignment entity class.
- * 
- * Энэ класс нь оюутны даалгаврын үндсэн мэдээллийг хадгална.
- * Domain entity учраас өгөгдөл болон суурь дүрмүүдийг өөртөө агуулж болно.
+ * Оюутны даалгаврын entity класс.
  */
 public class Assignment {
 
-    /** Даалгаврын дахин давтагдашгүй дугаар */
+    /** Assignment-ийн давтагдашгүй ID */
     private Long id;
 
     /** Даалгаврын гарчиг */
@@ -28,26 +25,24 @@ public class Assignment {
     /** Илгээсэн огноо */
     private LocalDate submissionDate;
 
-    /** Даалгаврын төлөв */
+    /** Төлөв */
     private AssignmentStatus status;
 
     /** Оноо */
     private Double score;
 
-    /** Багшийн сэтгэгдэл / тайлбар */
+    /** Багшийн тайлбар */
     private String feedback;
 
     /**
      * Параметргүй байгуулагч.
-     * JDBC, UI, mapping үед хэрэгтэй байж болно.
      */
     public Assignment() {
         this.status = AssignmentStatus.DRAFT;
     }
 
     /**
-     * Шинэ даалгавар үүсгэх байгуулагч.
-     * Анхны төлөв автоматаар DRAFT байна.
+     * Шинэ assignment үүсгэх байгуулагч.
      */
     public Assignment(String title, String studentId, String courseCode, String description) {
         this.title = title;

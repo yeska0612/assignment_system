@@ -1,38 +1,36 @@
 package mn.edu.num.assignmentsystem.core.ports;
 
 import java.util.List;
+
 import mn.edu.num.assignmentsystem.core.domain.Assignment;
 
 /**
- * Assignment entity-г хадгалах repository interface.
- * 
- * Энэ interface нь core layer-оос persistence layer-ийг салгаж өгнө.
- * Infrastructure layer дээр JDBC implementation бичигдэнэ.
+ * Assignment хадгалах repository interface.
  */
 public interface IAssignmentRepository {
 
     /**
-     * Шинэ assignment хадгалах.
+     * Шинэ assignment хадгална.
      */
     void save(Assignment assignment);
 
     /**
-     * Бүх assignment-уудыг авах.
+     * Бүх assignment-уудыг авна.
      */
     List<Assignment> findAll();
 
     /**
-     * ID-аар нэг assignment олох.
+     * ID-аар assignment авна.
      */
     Assignment findById(Long id);
 
     /**
-     * Assignment шинэчлэх.
+     * Assignment шинэчилнэ.
      */
     void update(Assignment assignment);
 
     /**
-     * ID-аар assignment устгах.
+     * ID-аар assignment устгана.
      */
     void deleteById(Long id);
 }

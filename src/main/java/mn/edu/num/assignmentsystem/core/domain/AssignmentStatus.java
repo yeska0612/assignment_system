@@ -1,12 +1,7 @@
 package mn.edu.num.assignmentsystem.core.domain;
 
 /**
- * Даалгаврын төлөвийг илэрхийлэх enum.
- * 
- * DRAFT     - Хараахан илгээгээгүй
- * SUBMITTED - Илгээсэн
- * GRADED    - Оноо тавьсан
- * REJECTED  - Буцаасан
+ * Assignment-ийн төлөвийг илэрхийлэх enum.
  */
 public enum AssignmentStatus {
     DRAFT,
