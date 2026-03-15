@@ -8,20 +8,30 @@ import javax.swing.table.AbstractTableModel;
 import mn.edu.num.assignmentsystem.core.domain.Assignment;
 
 /**
- * Assignment-уудыг JTable дээр харуулах model.
+ * Assignment-уудыг JTable дээр харуулах table model.
+ *
+ * Энэ класс нь Assignment object-уудыг
+ * хүснэгтийн мөр, багана болгон хөрвүүлнэ.
  */
 public class AssignmentTableModel extends AbstractTableModel {
 
     /** Хүснэгтийн баганын нэрс */
     private final String[] columnNames = {
-            "ID", "Гарчиг", "Оюутны ID", "Хичээлийн код", "Илгээсэн огноо", "Төлөв", "Оноо"
+            "ID",
+            "Title",
+            "Student ID",
+            "Course Code",
+            "Description",
+            "Submission Date",
+            "Status",
+            "Score"
     };
 
     /** Хүснэгтэд харагдах assignment жагсаалт */
     private List<Assignment> assignments;
 
     /**
-     * Анх хоосон model үүсгэнэ.
+     * Анх хоосон жагсаалттай model үүсгэнэ.
      */
     public AssignmentTableModel() {
         this.assignments = new ArrayList<>();
@@ -29,14 +39,23 @@ public class AssignmentTableModel extends AbstractTableModel {
 
     /**
      * Хүснэгтийн өгөгдлийг шинэчилнэ.
+     *
+     * @param assignments шинэ assignment жагсаалт
      */
     public void setAssignments(List<Assignment> assignments) {
-        this.assignments = assignments;
+        if (assignments == null) {
+            this.assignments = new ArrayList<>();
+        } else {
+            this.assignments = assignments;
+        }
         fireTableDataChanged();
     }
 
     /**
-     * Сонгосон мөрийн assignment-ийг буцаана.
+     * Тухайн мөрөнд байгаа assignment-ийг буцаана.
+     *
+     * @param rowIndex мөрийн индекс
+     * @return Assignment объект
      */
     public Assignment getAssignmentAt(int rowIndex) {
         if (rowIndex < 0 || rowIndex >= assignments.size()) {
@@ -74,11 +93,16 @@ public class AssignmentTableModel extends AbstractTableModel {
             case 3:
                 return assignment.getCourseCode();
             case 4:
-                return assignment.getSubmissionDate();
+                if (assignment.getFeedback() != null && !assignment.getFeedback().isBlank()) {
+                    return assignment.getFeedback();
+                }
+                return assignment.getDescription() == null ? "" : assignment.getDescription();
             case 5:
-                return assignment.getStatus();
+                return assignment.getSubmissionDate() == null ? "" : assignment.getSubmissionDate();
             case 6:
-                return assignment.getScore();
+                return assignment.getStatus();
+            case 7:
+                return assignment.getScore() == null ? "" : assignment.getScore();
             default:
                 return null;
         }

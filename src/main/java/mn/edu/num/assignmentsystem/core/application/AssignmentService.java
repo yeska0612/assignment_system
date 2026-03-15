@@ -9,6 +9,13 @@ import mn.edu.num.assignmentsystem.core.ports.IAssignmentRepository;
 
 /**
  * Assignment-тэй холбоотой бизнес логикыг хариуцна.
+ * - шинэ assignment үүсгэх
+ * - assignment шинэчлэх
+ * - assignment устгах
+ * - assignment submit хийх
+ * - assignment grade хийх
+ * - бүх assignment жагсаалт авах
+ * - ID-аар assignment авах
  */
 public class AssignmentService {
 
@@ -24,22 +31,46 @@ public class AssignmentService {
 
     /**
      * Шинэ assignment үүсгэж хадгална.
+     * Шинэ assignment үргэлж DRAFT төлөвтэй эхэлнэ.
      */
     public void createAssignment(Assignment assignment) {
         validateBasicFields(assignment);
+
+        // Шинэ assignment автоматаар DRAFT байна
         assignment.setStatus(AssignmentStatus.DRAFT);
+
         assignmentRepository.save(assignment);
     }
 
     /**
      * Assignment шинэчилнэ.
+     * Зөвхөн DRAFT төлөвтэй assignment-ийг шинэчилж болно.
      */
     public void updateAssignment(Assignment assignment) {
+        if (assignment == null) {
+            throw new IllegalArgumentException("Assignment объект хоосон байна.");
+        }
+
         if (assignment.getId() == null) {
             throw new IllegalArgumentException("Шинэчлэх assignment-ийн ID хоосон байна.");
         }
 
+        // DB дээр байгаа одоогийн assignment-ийг авна
+        Assignment existingAssignment = getExistingAssignment(assignment.getId());
+
+        // Зөвхөн DRAFT төлөвтэй assignment-ийг засах боломжтой
+        if (existingAssignment.getStatus() != AssignmentStatus.DRAFT) {
+            throw new IllegalStateException("Зөвхөн DRAFT төлөвтэй assignment-ийг засаж болно.");
+        }
+
         validateBasicFields(assignment);
+
+        // Хуучин workflow мэдээллийг хадгалж үлдээнэ
+        assignment.setStatus(existingAssignment.getStatus());
+        assignment.setSubmissionDate(existingAssignment.getSubmissionDate());
+        assignment.setScore(existingAssignment.getScore());
+        assignment.setFeedback(existingAssignment.getFeedback());
+
         assignmentRepository.update(assignment);
     }
 
@@ -50,6 +81,9 @@ public class AssignmentService {
         if (id == null) {
             throw new IllegalArgumentException("Устгах assignment-ийн ID хоосон байна.");
         }
+
+        // Байгаа эсэхийг эхлээд шалгана
+        getExistingAssignment(id);
 
         assignmentRepository.deleteById(id);
     }
@@ -74,7 +108,6 @@ public class AssignmentService {
 
     /**
      * Assignment-ийг submit хийнэ.
-     * Зөвхөн DRAFT -> SUBMITTED.
      */
     public void submitAssignment(Long id) {
         Assignment assignment = getExistingAssignment(id);
@@ -91,6 +124,7 @@ public class AssignmentService {
 
     /**
      * Assignment-ийг grade хийнэ.
+     * UI дээрээс зөвхөн ID ба оноо ирэх хувилбар.
      */
     public void gradeAssignment(Long id, Double score) {
         gradeAssignment(id, score, null);
@@ -98,7 +132,6 @@ public class AssignmentService {
 
     /**
      * Assignment-ийг grade хийнэ.
-     * Зөвхөн SUBMITTED -> GRADED.
      */
     public void gradeAssignment(Long id, Double score, String feedback) {
         Assignment assignment = getExistingAssignment(id);
@@ -139,7 +172,7 @@ public class AssignmentService {
     }
 
     /**
-     * Үндсэн талбаруудыг шалгана.
+     * Assignment-ийн үндсэн талбаруудыг шалгана.
      */
     private void validateBasicFields(Assignment assignment) {
         if (assignment == null) {
@@ -160,7 +193,7 @@ public class AssignmentService {
     }
 
     /**
-     * ID-аар assignment авч, байхгүй бол алдаа өгнө.
+     * ID-аар assignment авч, байхгүй бол алдаа шиднэ.
      */
     private Assignment getExistingAssignment(Long id) {
         Assignment assignment = getAssignmentById(id);

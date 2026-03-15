@@ -11,17 +11,20 @@ import mn.edu.num.assignmentsystem.infrastructure.persistence.RepositoryFactory;
  */
 public class Main {
 
+    /**
+     * Програмын эхлэх method.
+     */
     public static void main(String[] args) {
 
-        // Repository factory-аас repository үүсгэнэ
+        // Repository үүсгэнэ
         IAssignmentRepository repository = RepositoryFactory.createRepository();
 
-        // Service layer үүсгэнэ
-        AssignmentService service = new AssignmentService(repository);
+        // Service үүсгэнэ
+        AssignmentService assignmentService = new AssignmentService(repository);
 
         // UI эхлүүлнэ
         SwingUtilities.invokeLater(() -> {
-            MainFrame frame = new MainFrame(service);
+            MainFrame frame = new MainFrame(assignmentService);
             frame.setVisible(true);
         });
     }
