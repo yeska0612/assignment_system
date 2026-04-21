@@ -8,6 +8,28 @@
 </head>
 <body>
 
+<h2>Add New Assignment</h2>
+
+<form action="assignments" method="POST">
+
+    <label>Title:</label>
+    <input type="text" name="title" required>
+
+    <label>Student ID:</label>
+    <input type="text" name="studentId" required>
+
+    <label>Course Code:</label>
+    <input type="text" name="courseCode" required>
+
+    <label>Description:</label>
+    <input type="text" name="description">
+
+    <button type="submit">Save</button>
+
+</form>
+
+<hr>
+
 <h2>All Assignments</h2>
 
 <table border="1">
@@ -36,6 +58,17 @@
         <td><%= a.getStudentId() %></td>
         <td><%= a.getCourseCode() %></td>
         <td><%= a.getStatus() %></td>
+        <td>
+    		<form action="delete-assignment" method="POST" style="display:inline;">
+        		<input type="hidden" name="assignmentId"
+               		value="<%= a.getId() %>">
+
+        		<button type="submit"
+        		    onclick="return confirm('Delete this assignment?');">
+            		Delete
+        		</button>
+    		</form>
+		</td>
     </tr>
 
 <%
