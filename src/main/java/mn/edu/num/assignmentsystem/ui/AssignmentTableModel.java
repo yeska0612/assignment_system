@@ -103,6 +103,9 @@ public class AssignmentTableModel extends AbstractTableModel {
             case 3:
                 return assignment.getCourseCode();
             case 4:
+                if (assignment.getFeedback() != null && !assignment.getFeedback().isBlank()) {
+                    return assignment.getFeedback();
+                }
                 return assignment.getDescription() == null ? "" : assignment.getDescription();
             case 5:
                 return assignment.getSubmissionDate() == null ? "" : assignment.getSubmissionDate();

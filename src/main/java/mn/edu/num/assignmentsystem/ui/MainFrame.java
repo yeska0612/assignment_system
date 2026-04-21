@@ -23,12 +23,16 @@ import mn.edu.num.assignmentsystem.core.domain.AssignmentStatus;
  * Assignment системийн үндсэн UI цонх.
  *
  * Энэ класс нь:
- * assignment жагсаалтыг хүснэгтээр харуулах
- * шинэ assignment нэмэх
- * хүснэгтээс мөр сонгоход form дээр мэдээлэл гаргах
- * DRAFT assignment шинэчлэх
- * submit / grade / reject / delete үйлдэл хийх
- * button-уудын идэвхийг status-аас хамааруулж тохируулах үүрэгтэй.
+ * - assignment жагсаалтыг хүснэгтээр харуулах
+ * - хүснэгтийн мөр сонгоход form дээр мэдээлэл ачаалах
+ * - save button-оор create/update хоёрыг удирдах
+ * - submit / grade / reject / delete үйлдэл хийх
+ * - button-уудын төлөвийг тухайн assignment-ийн status-аас хамааруулж удирдах
+ *
+ * Lab 07-ийн master-detail requirement-ийн дагуу:
+ * - row click хийхэд selectedAssignmentId хадгалагдана
+ * - form автоматаар бөглөгдөнө
+ * - Save товчийн текст Update болж өөрчлөгдөнө
  */
 public class MainFrame extends JFrame {
 
@@ -44,11 +48,13 @@ public class MainFrame extends JFrame {
     /** Refresh товч */
     private final JButton refreshButton;
 
-    /** Create товч */
-    private JButton addButton;
-
-    /** Update товч */
-    private JButton updateButton;
+    /**
+     * Save / Update товч.
+     *
+     * selectedAssignmentId == null бол CREATE
+     * selectedAssignmentId != null бол UPDATE ажиллана.
+     */
+    private JButton saveButton;
 
     /** Submit товч */
     private JButton submitButton;
@@ -74,7 +80,13 @@ public class MainFrame extends JFrame {
     /** Description input */
     private JTextField descriptionField;
 
-    /** Одоогоор сонгогдсон assignment-ийн ID */
+    /**
+     * Одоогоор сонгогдсон assignment-ийн ID.
+     *
+     * Энэ хувьсагч нь UI state management-д маш чухал:
+     * - null байвал шинэ assignment үүсгэнэ
+     * - утгатай байвал тухайн assignment-ийг update хийнэ
+     */
     private Long selectedAssignmentId = null;
 
     /**
@@ -110,7 +122,7 @@ public class MainFrame extends JFrame {
      * UI component-уудыг үүсгэнэ.
      */
     private void initializeComponents() {
-        // JTable тохиргоо
+        // JTable-ийн үндсэн сонголтын тохиргоо
         assignmentTable.setRowSelectionAllowed(true);
         assignmentTable.setColumnSelectionAllowed(false);
         assignmentTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -122,11 +134,14 @@ public class MainFrame extends JFrame {
         courseCodeField = new JTextField(12);
         descriptionField = new JTextField(20);
 
+        /*
+         * Description нь create болон update үед хэрэглэгчээс орж ирэх ёстой.
+         * Тиймээс editable байх шаардлагатай.
+         */
         descriptionField.setEditable(true);
 
-        // Товчнууд
-        addButton = new JButton("Create Assignment");
-        updateButton = new JButton("Update");
+        // Action button-ууд
+        saveButton = new JButton("Save");
         submitButton = new JButton("Submit");
         gradeButton = new JButton("Grade");
         rejectButton = new JButton("Reject");
@@ -154,8 +169,7 @@ public class MainFrame extends JFrame {
         formPanel.add(descriptionField);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-        buttonPanel.add(addButton);
-        buttonPanel.add(updateButton);
+        buttonPanel.add(saveButton);
         buttonPanel.add(submitButton);
         buttonPanel.add(gradeButton);
         buttonPanel.add(rejectButton);
@@ -180,14 +194,24 @@ public class MainFrame extends JFrame {
             loadAssignments();
         });
 
-        addButton.addActionListener(e -> createAssignment());
-        updateButton.addActionListener(e -> updateAssignment());
+        /*
+         * Save button нь хоёр үүрэгтэй:
+         * - selectedAssignmentId байхгүй бол create
+         * - selectedAssignmentId байвал update
+         *
+         * Ингэснээр Lab 07-ийн robust save/update requirement хангагдана.
+         */
+        saveButton.addActionListener(e -> saveOrUpdateAssignment());
+
         submitButton.addActionListener(e -> submitAssignment());
         gradeButton.addActionListener(e -> gradeAssignment());
         rejectButton.addActionListener(e -> rejectAssignment());
         deleteButton.addActionListener(e -> deleteAssignment());
 
-        // Row select хийхэд form дээр мэдээлэл ачаална
+        /*
+         * Master-detail navigation:
+         * row select хийхэд тухайн assignment-ийн мэдээллийг form дээр ачаална.
+         */
         assignmentTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 loadSelectedAssignmentToForm();
@@ -225,107 +249,62 @@ public class MainFrame extends JFrame {
     }
 
     /**
-     * Form дээрх мэдээллээр шинэ assignment үүсгэнэ.
+     * Save button-ийн create/update нэгдсэн логик.
+     *
+     * - selectedAssignmentId == null бол шинэ assignment үүсгэнэ
+     * - selectedAssignmentId != null бол сонгосон assignment-ийг шинэчилнэ
+     *
+     * Validation төрлийн алдааг WARNING popup-аар,
+     * бусад системийн алдааг ERROR popup-аар харуулна.
      */
-    private void createAssignment() {
+    private void saveOrUpdateAssignment() {
         String title = titleField.getText().trim();
         String studentId = studentIdField.getText().trim();
         String courseCode = courseCodeField.getText().trim();
         String description = descriptionField.getText().trim();
-
-        if (title.isEmpty() || studentId.isEmpty() || courseCode.isEmpty()) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Title, Student ID, Course Code заавал бөглөнө.",
-                    "Алдаа",
-                    JOptionPane.ERROR_MESSAGE
-            );
-            return;
-        }
 
         try {
             Assignment assignment = new Assignment(title, studentId, courseCode, description);
-            assignmentService.createAssignment(assignment);
+
+            if (selectedAssignmentId == null) {
+                /*
+                 * Ямар ч мөр сонгогдоогүй бол create горим ажиллана.
+                 */
+                assignmentService.createAssignment(assignment);
+                JOptionPane.showMessageDialog(this, "Assignment амжилттай нэмэгдлээ.");
+            } else {
+                /*
+                 * selectedAssignmentId байгаа үед update горим ажиллана.
+                 * Зөвхөн DRAFT төлөвтэй assignment update хийгдэхийг
+                 * service layer өөрөө шалгана.
+                 */
+                assignment.setId(selectedAssignmentId);
+                assignmentService.updateAssignment(assignment);
+                JOptionPane.showMessageDialog(this, "Assignment амжилттай шинэчлэгдлээ.");
+            }
 
             clearForm();
             loadAssignments();
 
-            JOptionPane.showMessageDialog(this, "Assignment амжилттай нэмэгдлээ.");
-
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    e.getMessage(),
+                    "Validation warning",
+                    JOptionPane.WARNING_MESSAGE
+            );
+        } catch (IllegalStateException e) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    e.getMessage(),
+                    "Operation error",
+                    JOptionPane.ERROR_MESSAGE
+            );
         } catch (Exception e) {
             JOptionPane.showMessageDialog(
                     this,
                     e.getMessage(),
-                    "Алдаа",
-                    JOptionPane.ERROR_MESSAGE
-            );
-        }
-    }
-
-    /**
-     * Сонгосон assignment-ийг шинэчилнэ.
-     * Зөвхөн DRAFT төлөвтэй assignment засагдана.
-     */
-    private void updateAssignment() {
-        if (selectedAssignmentId == null) {
-            JOptionPane.showMessageDialog(this, "Засах assignment сонгоно уу.");
-            return;
-        }
-
-        int row = assignmentTable.getSelectedRow();
-        if (row < 0) {
-            JOptionPane.showMessageDialog(this, "Засах assignment сонгоно уу.");
-            return;
-        }
-
-        Assignment selectedAssignment = tableModel.getAssignmentAt(row);
-
-        if (selectedAssignment == null) {
-            JOptionPane.showMessageDialog(this, "Сонгосон assignment олдсонгүй.");
-            return;
-        }
-
-        if (selectedAssignment.getStatus() != AssignmentStatus.DRAFT) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Зөвхөн DRAFT төлөвтэй assignment-ийг засаж болно.",
-                    "Алдаа",
-                    JOptionPane.ERROR_MESSAGE
-            );
-            return;
-        }
-
-        String title = titleField.getText().trim();
-        String studentId = studentIdField.getText().trim();
-        String courseCode = courseCodeField.getText().trim();
-        String description = descriptionField.getText().trim();
-
-        if (title.isEmpty() || studentId.isEmpty() || courseCode.isEmpty()) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Title, Student ID, Course Code заавал бөглөнө.",
-                    "Алдаа",
-                    JOptionPane.ERROR_MESSAGE
-            );
-            return;
-        }
-
-        try {
-            Assignment updatedAssignment = new Assignment(title, studentId, courseCode, description);
-            updatedAssignment.setId(selectedAssignmentId);
-
-            assignmentService.updateAssignment(updatedAssignment);
-
-            clearForm();
-            loadAssignments();
-
-            JOptionPane.showMessageDialog(this, "Assignment амжилттай шинэчлэгдлээ.");
-
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    e.getMessage(),
-                    "Алдаа",
+                    "System error",
                     JOptionPane.ERROR_MESSAGE
             );
         }
@@ -364,7 +343,6 @@ public class MainFrame extends JFrame {
 
     /**
      * Сонгосон assignment-д оноо өгч GRADED төлөвт оруулна.
-     * Мөн хүсвэл нэмэлт тайлбар/comment авч болно.
      */
     private void gradeAssignment() {
         int row = assignmentTable.getSelectedRow();
@@ -383,7 +361,6 @@ public class MainFrame extends JFrame {
         try {
             Double score = Double.parseDouble(scoreText);
 
-            // Optional comment авах
             String feedback = JOptionPane.showInputDialog(
                     this,
                     "Grade хийх тайлбар оруул (хоосон байж болно):"
@@ -423,7 +400,6 @@ public class MainFrame extends JFrame {
 
     /**
      * Сонгосон assignment-ийг reject хийнэ.
-     * Reject reason-ийг popup-оор асууна.
      */
     private void rejectAssignment() {
         int row = assignmentTable.getSelectedRow();
@@ -472,8 +448,12 @@ public class MainFrame extends JFrame {
             );
         }
     }
+
     /**
      * Сонгосон assignment-ийг устгана.
+     *
+     * Устгахаас өмнө хэрэглэгчээс баталгаажуулалт асууж,
+     * accidental delete-ээс хамгаална.
      */
     private void deleteAssignment() {
         int row = assignmentTable.getSelectedRow();
@@ -514,6 +494,11 @@ public class MainFrame extends JFrame {
 
     /**
      * Хүснэгтээс сонгосон assignment-ийн мэдээллийг form дээр ачаална.
+     *
+     * Энэ нь master-detail navigation-ийн үндсэн логик:
+     * - selectedAssignmentId хадгална
+     * - form автоматаар бөглөгдөнө
+     * - Save товчийн текст Update болж өөрчлөгдөнө
      */
     private void loadSelectedAssignmentToForm() {
         int row = assignmentTable.getSelectedRow();
@@ -539,7 +524,6 @@ public class MainFrame extends JFrame {
         titleField.setText(assignment.getTitle());
         studentIdField.setText(assignment.getStudentId());
         courseCodeField.setText(assignment.getCourseCode());
-
         descriptionField.setText(
                 assignment.getDescription() == null ? "" : assignment.getDescription()
         );
@@ -553,9 +537,14 @@ public class MainFrame extends JFrame {
     private void updateButtonStates() {
         int row = assignmentTable.getSelectedRow();
 
-        // default төлөв
-        addButton.setEnabled(selectedAssignmentId == null);
-        updateButton.setEnabled(false);
+        /*
+         * Default төлөв:
+         * - ямар ч мөр сонгогдоогүй үед Save горим байна
+         * - delete/submit/grade/reject disabled байна
+         */
+        saveButton.setText(selectedAssignmentId == null ? "Save" : "Update");
+        saveButton.setEnabled(true);
+
         submitButton.setEnabled(false);
         gradeButton.setEnabled(false);
         rejectButton.setEnabled(false);
@@ -571,18 +560,20 @@ public class MainFrame extends JFrame {
             return;
         }
 
-        // Сонголт байгаа үед create button disabled
-        addButton.setEnabled(false);
+        /*
+         * Сонгосон мөр байгаа үед delete идэвхтэй болно.
+         * Save button аль хэдийн Update тексттэй болсон байна.
+         */
         deleteButton.setEnabled(true);
 
         if (assignment.getStatus() == AssignmentStatus.DRAFT) {
-            updateButton.setEnabled(true);
             submitButton.setEnabled(true);
         } else if (assignment.getStatus() == AssignmentStatus.SUBMITTED) {
             gradeButton.setEnabled(true);
             rejectButton.setEnabled(true);
         }
     }
+
     /**
      * Зөвхөн form талбаруудыг цэвэрлэнэ.
      */
@@ -595,6 +586,11 @@ public class MainFrame extends JFrame {
 
     /**
      * Form болон selection-ийг цэвэрлэнэ.
+     *
+     * Энэ method дуудагдсаны дараа UI create mode руу буцна:
+     * - selectedAssignmentId = null
+     * - хүснэгтийн selection арилна
+     * - Save товчийн текст дахин Save болно
      */
     private void clearForm() {
         clearFormFieldsOnly();

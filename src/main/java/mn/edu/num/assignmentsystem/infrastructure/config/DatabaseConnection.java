@@ -35,7 +35,14 @@ public class DatabaseConnection {
      */
     private DatabaseConnection() {
         loadProperties();
-        loadDriver();
+
+        /*
+         * Зөвхөн DB persistence mode үед JDBC driver хэрэгтэй.
+         * MEM mode ашиглаж байгаа үед database driver ачаалах шаардлагагүй.
+         */
+        if ("DB".equalsIgnoreCase(persistenceMode)) {
+            loadDriver();
+        }
     }
 
     /**
