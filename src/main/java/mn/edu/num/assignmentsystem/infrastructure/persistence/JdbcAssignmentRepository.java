@@ -5,7 +5,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement; 
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,9 +16,15 @@ import mn.edu.num.assignmentsystem.infrastructure.config.DatabaseConnection;
 
 /**
  * Assignment repository-ийн JDBC implementation.
- * 
+ *
  * Энэ класс нь өгөгдлийг H2 database дээр хадгална.
- * Бүх SQL логик энэ class дотор байрлана.
+ * CRUD төрлийн SQL query-үүд энэ class дотор байрлана.
+ *
+ * Schema үүсгэх логик энэ class-аас хасагдсан.
+ * Одоо schema.sql-ийг DatabaseConnection startup үед ажиллуулна.
+ *
+ * Ингэснээр repository class нь зөвхөн persistence operation-д төвлөрч,
+ * Single Responsibility Principle-д илүү нийцнэ.
  */
 public class JdbcAssignmentRepository implements IAssignmentRepository {
 
@@ -27,40 +33,12 @@ public class JdbcAssignmentRepository implements IAssignmentRepository {
 
     /**
      * Constructor.
-     * Repository үүсэх үед хүснэгт байгаа эсэхийг шалгаж,
-     * байхгүй бол автоматаар үүсгэнэ.
+     *
+     * Энэ class үүсэх үед schema үүсгэхгүй.
+     * Schema initialization одоо DatabaseConnection түвшинд явагдана.
      */
     public JdbcAssignmentRepository() {
         this.databaseConnection = DatabaseConnection.getInstance();
-        createTableIfNotExists();
-    }
-
-    /**
-     * assignments хүснэгтийг байхгүй бол үүсгэнэ.
-     */
-    private void createTableIfNotExists() {
-        String sql = """
-                CREATE TABLE IF NOT EXISTS assignments (
-                    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                    title VARCHAR(255) NOT NULL,
-                    student_id VARCHAR(100) NOT NULL,
-                    course_code VARCHAR(100) NOT NULL,
-                    description VARCHAR(1000),
-                    submission_date DATE,
-                    status VARCHAR(50) NOT NULL,
-                    score DOUBLE,
-                    feedback VARCHAR(1000)
-                )
-                """;
-
-        try (Connection connection = databaseConnection.getConnection();
-             Statement statement = connection.createStatement()) {
-
-            statement.execute(sql);
-
-        } catch (SQLException e) {
-            throw new RuntimeException("assignments хүснэгт үүсгэх үед алдаа гарлаа.", e);
-        }
     }
 
     @Override
@@ -209,6 +187,9 @@ public class JdbcAssignmentRepository implements IAssignmentRepository {
 
     /**
      * ResultSet-ийн нэг мөрийг Assignment object болгон хөрвүүлнэ.
+     *
+     * Repository layer нь relational row data-г domain object болгон буцаах
+     * mapping responsibility-г хариуцна.
      */
     private Assignment mapRowToAssignment(ResultSet resultSet) throws SQLException {
         Assignment assignment = new Assignment();
