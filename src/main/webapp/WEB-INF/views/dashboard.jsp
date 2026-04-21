@@ -11,26 +11,17 @@
 
     <h2>Dashboard</h2>
 
-    <p><%= request.getAttribute("welcomeMessage") %></p>
+    <p><c:out value="${welcomeMessage}" /></p>
 
-    <!--
-        Logout link нь зөвхөн login хийсэн хэрэглэгч dashboard дээр орж ирсэн үед харагдана.
-        /logout руу орсноор session invalidate хийгдэнэ.
-    -->
     <p>
-        <a href="<%= request.getContextPath() %>/logout">Logout</a>
+        <a href="${pageContext.request.contextPath}/logout">Logout</a>
     </p>
 
     <hr>
 
     <h3>All Assignments</h3>
 
-    <!--
-        Assignment нэмэх form.
-        Dashboard хамгаалагдсан route тул login хийсэн хэрэглэгч л create хийх боломжтой.
-    -->
-    <form action="<%= request.getContextPath() %>/assignments" method="POST">
-
+    <form action="${pageContext.request.contextPath}/assignments" method="POST">
         <label for="title">Title:</label>
         <input type="text" id="title" name="title" required>
 
@@ -58,35 +49,26 @@
             <th>Action</th>
         </tr>
 
-        <%
-            List<Assignment> list =
-                    (List<Assignment>) request.getAttribute("assignmentList");
-
-            if (list != null) {
-                for (Assignment a : list) {
-        %>
-        <tr>
-            <td><%= a.getId() %></td>
-            <td><%= a.getTitle() %></td>
-            <td><%= a.getStudentId() %></td>
-            <td><%= a.getCourseCode() %></td>
-            <td><%= a.getStatus() %></td>
-            <td>
-                <form action="<%= request.getContextPath() %>/delete-assignment"
-                      method="POST"
-                      style="display:inline;">
-                    <input type="hidden" name="assignmentId" value="<%= a.getId() %>">
-                    <button type="submit"
-                            onclick="return confirm('Delete this assignment?');">
-                        Delete
-                    </button>
-                </form>
-            </td>
-        </tr>
-        <%
-                }
-            }
-        %>
+        <c:forEach var="a" items="${assignmentList}">
+            <tr>
+                <td><c:out value="${a.id}" /></td>
+                <td><c:out value="${a.title}" /></td>
+                <td><c:out value="${a.studentId}" /></td>
+                <td><c:out value="${a.courseCode}" /></td>
+                <td><c:out value="${a.status}" /></td>
+                <td>
+                    <form action="${pageContext.request.contextPath}/delete-assignment"
+                          method="POST"
+                          style="display:inline;">
+                        <input type="hidden" name="assignmentId" value="${a.id}">
+                        <button type="submit"
+                                onclick="return confirm('Delete this assignment?');">
+                            Delete
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        </c:forEach>
     </table>
 
 </body>
