@@ -15,62 +15,57 @@ import mn.edu.num.assignmentsystem.core.ports.IAssignmentRepository;
 import mn.edu.num.assignmentsystem.infrastructure.persistence.RepositoryFactory;
 
 /**
- * Servlet = Controller layer (Web adapter)
+ * AssignmentServlet нь web adapter-ийн controller үүрэгтэй.
  *
- * Browser → HTTP request → Servlet → Service → DB → буцааж JSP рүү дамжуулна
+ * Энэ servlet:
+ * - GET хүсэлтээр бүх assignment-ийг ачаалж JSP рүү дамжуулна
+ * - POST хүсэлтээр browser form-оос шинэ assignment үүсгэнэ
+ *
+ * Core layer нь web-ийн талаар юу ч мэдэхгүй.
+ * Servlet зөвхөн request-ийг service рүү хөрвүүлж өгч байна.
  */
 @WebServlet("/assignments")
 public class AssignmentServlet extends HttpServlet {
 
+    private static final long serialVersionUID = 1L;
+
+    /** Business logic service */
     private AssignmentService assignmentService;
 
     /**
-     * Servlet анх ачаалагдахад 1 удаа дуудагдана.
+     * Servlet анх ачаалагдах үед service-ийг factory-аар үүсгэнэ.
      */
     @Override
     public void init() throws ServletException {
-
-        /*
-         * Factory ашиглаж repository авна.
-         * Core layer-д огт өөрчлөлт хийхгүй.
-         */
         IAssignmentRepository repository = RepositoryFactory.createRepository();
-
-        /*
-         * Service үүсгэж controller дээр хадгална.
-         */
         this.assignmentService = new AssignmentService(repository);
     }
 
     /**
      * GET /assignments
      *
-     * Browser энэ URL рүү ороход:
+     * Browser-оос assignments page нээгдэхэд:
      * - DB-с бүх assignment авна
-     * - request дээр хадгална
-     * - JSP рүү forward хийнэ
+     * - request attribute-д хадгална
+     * - JSP view рүү forward хийнэ
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        /*
-         * Service-ээс бүх өгөгдөл авна
-         */
         List<Assignment> assignments = assignmentService.getAllAssignments();
-
-        /*
-         * Request attribute (backpack) дотор хадгална
-         */
         request.setAttribute("assignmentList", assignments);
 
-        /*
-         * JSP рүү дамжуулна
-         */
         request.getRequestDispatcher("/WEB-INF/views/assignments.jsp")
                .forward(request, response);
     }
-    
+
+    /**
+     * POST /assignments
+     *
+     * Browser form-оос ирсэн өгөгдлөөр шинэ assignment үүсгэнэ.
+     * Амжилттай хадгалсны дараа PRG pattern ашиглан redirect хийнэ.
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -81,29 +76,28 @@ public class AssignmentServlet extends HttpServlet {
         String description = request.getParameter("description");
 
         try {
-            Assignment assignment =
-                new Assignment(title, studentId, courseCode, description);
-
+            Assignment assignment = new Assignment(title, studentId, courseCode, description);
             assignmentService.createAssignment(assignment);
 
             /*
-             * PRG Pattern
-             * → refresh хийхэд duplicate үүсэхгүй
+             * PRG (Post-Redirect-Get) pattern:
+             * POST амжилттай болсны дараа шууд JSP рүү forward хийхгүй.
+             * Харин browser-т шинэ GET request хийлгэж redirect хийнэ.
+             *
+             * Ингэснээр хэрэглэгч F5 дарахад form дахин submit болохгүй,
+             * duplicate insert-ээс хамгаална.
              */
-            response.sendRedirect("assignments");
+            response.sendRedirect(request.getContextPath() + "/assignments");
 
         } catch (IllegalArgumentException e) {
-
             response.sendError(
-                HttpServletResponse.SC_BAD_REQUEST,
-                e.getMessage()
+                    HttpServletResponse.SC_BAD_REQUEST,
+                    e.getMessage()
             );
-
         } catch (Exception e) {
-
             response.sendError(
-                HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                "System error"
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Assignment хадгалах үед системийн алдаа гарлаа."
             );
         }
     }
