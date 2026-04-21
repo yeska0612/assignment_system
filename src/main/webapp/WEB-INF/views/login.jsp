@@ -2,40 +2,49 @@
 <html>
 <head>
     <title>Login</title>
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/css/login.css">
 </head>
 <body>
 
-    <h2>Login</h2>
+<div class="login-shell">
+    <div class="login-card">
+        <h2 class="login-title">Assignment System</h2>
+        <p class="login-subtitle">Sign in to continue</p>
 
-    <%
-        String error = request.getParameter("error");
-        if ("true".equals(error)) {
-    %>
-        <p style="color:red;">Invalid username or password.</p>
-    <%
-        }
-    %>
+        <%
+            String error = request.getParameter("error");
+            if ("true".equals(error)) {
+        %>
+            <div class="alert alert-error">
+                Invalid username or password.
+            </div>
+        <%
+            }
+        %>
 
-    <form action="<%= request.getContextPath() %>/login" method="POST">
-        <div>
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required>
+        <form action="<%= request.getContextPath() %>/login" method="POST">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+
+            <div class="form-group" style="margin-top:14px;">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+
+            <div style="margin-top:18px;">
+                <button type="submit" class="btn btn-primary" style="width:100%;">Login</button>
+            </div>
+        </form>
+
+        <div class="credentials-box">
+            <strong>Demo accounts</strong><br><br>
+            Teacher: <strong>teacher</strong> / <strong>password12345</strong><br>
+            Student: <strong>student</strong> / <strong>password1234</strong>
         </div>
-
-        <div style="margin-top:10px;">
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
-        </div>
-
-        <div style="margin-top:10px;">
-            <button type="submit">Login</button>
-        </div>
-    </form>
-
-    <p style="margin-top:15px;">
-   		Teacher account: <strong>teacher</strong> / <strong>password123</strong><br>
-    	Student account: <strong>student</strong> / <strong>password123</strong>
-	</p>
+    </div>
+</div>
 
 </body>
 </html>

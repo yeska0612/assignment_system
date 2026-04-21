@@ -61,7 +61,7 @@ public class LoginServlet extends HttpServlet {
          * Teacher login:
          * Teacher нь assignment үүсгэх, засах, устгах, үнэлэх эрхтэй.
          */
-        if ("teacher".equals(username) && "password123".equals(password)) {
+        if ("teacher".equals(username) && "password12345".equals(password)) {
             session = request.getSession();
             session.setAttribute("loggedInUser", username);
             session.setAttribute("role", UserRole.TEACHER.name());
@@ -77,7 +77,7 @@ public class LoginServlet extends HttpServlet {
          * Demo зорилгоор studentId-г session дээр хадгалж байна.
          * Энэ нь assignment.studentId талбартай таарч filter хийхэд ашиглагдана.
          */
-        if ("student".equals(username) && "password123".equals(password)) {
+        if ("student".equals(username) && "password1234".equals(password)) {
             session = request.getSession();
             session.setAttribute("loggedInUser", username);
             session.setAttribute("role", UserRole.STUDENT.name());

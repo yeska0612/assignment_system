@@ -2,19 +2,25 @@
 <html>
 <head>
     <title>Application Error</title>
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/css/error.css">
 </head>
 <body>
 
-    <h2>Something went wrong</h2>
+<div class="page-container">
+    <div class="card" style="max-width:700px; margin:80px auto;">
+        <h2 class="page-title">Something went wrong</h2>
+        <p class="subtitle">
+            The application encountered an unexpected error.
+            Please try again later.
+        </p>
 
-    <p>
-        The application encountered an unexpected error.
-        Please try again later or contact the administrator.
-    </p>
+        <hr class="divider">
 
-    <p>
-        <a href="${pageContext.request.contextPath}/login">Back to Login</a>
-    </p>
+        <a class="btn btn-primary" href="${pageContext.request.contextPath}/login">
+            Back to Login
+        </a>
+    </div>
+</div>
 
 </body>
 </html>
