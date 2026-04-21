@@ -2,6 +2,7 @@ package mn.edu.num.assignmentsystem.api;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -11,7 +12,9 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
+import mn.edu.num.assignmentsystem.core.application.AssignmentDto;
 import mn.edu.num.assignmentsystem.core.application.AssignmentService;
 import mn.edu.num.assignmentsystem.core.domain.Assignment;
 import mn.edu.num.assignmentsystem.core.ports.IAssignmentRepository;
@@ -20,31 +23,27 @@ import mn.edu.num.assignmentsystem.infrastructure.persistence.RepositoryFactory;
 /**
  * AssignmentApiServlet нь RESTful JSON API-ийн primary adapter юм.
  *
- * Энэ servlet нь HTML view ашиглахгүй.
- * Харин HTTP request авч, JSON response буцаана.
+ * Энэ servlet нь:
+ * - GET /api/assignments
+ * - GET /api/assignments/{id}
+ * - POST /api/assignments
  *
- * Дэмжих endpoint-ууд:
- * - GET  /api/assignments       -> бүх assignment жагсаалт
- * - GET  /api/assignments/{id}  -> нэг assignment
- * - POST /api/assignments       -> шинэ assignment үүсгэх
+ * endpoint-уудыг хариуцна.
  *
- * Энэ нь mobile app, Postman, бусад client-ууд Core layer-тай
- * HTML/JSP-гүйгээр харилцах боломж олгоно.
+ * Project 1 requirement-ийн дагуу API layer нь domain object-ийг
+ * шууд serialize хийхгүй, харин DTO болгон хөрвүүлж JSON буцаана.
  */
 @WebServlet("/api/assignments/*")
 public class AssignmentApiServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
 
+    /** Business logic service */
     private AssignmentService assignmentService;
 
+    /** JSON mapper */
     private ObjectMapper objectMapper;
 
-    /**
-     * Servlet анх ачаалагдах үед:
-     * - service-ээ factory-аар авна
-     * - Jackson ObjectMapper-оо үүсгэнэ
-     */
     @Override
     public void init() throws ServletException {
         IAssignmentRepository repository = RepositoryFactory.createRepository();
@@ -52,9 +51,19 @@ public class AssignmentApiServlet extends HttpServlet {
 
         this.objectMapper = new ObjectMapper();
 
+        /*
+         * Java time төрлүүдийг serialize хийх support нэмэж байна.
+         * LocalDate зэрэг талбарууд 500 алдаа үүсгэхээс сэргийлнэ.
+         */
         this.objectMapper.registerModule(new JavaTimeModule());
     }
 
+    /**
+     * GET /api/assignments
+     * GET /api/assignments/{id}
+     *
+     * JSON API дээр content type болон encoding-ийг үргэлж зөв тохируулна.
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -65,58 +74,41 @@ public class AssignmentApiServlet extends HttpServlet {
         String pathInfo = request.getPathInfo();
 
         try {
-            /*
-             * Хэрэв pathInfo хоосон бол:
-             * GET /api/assignments
-             *
-             * Бүх assignment-уудыг JSON array болгож буцаана.
-             */
             if (pathInfo == null || pathInfo.equals("/")) {
-                List<Assignment> assignments = assignmentService.getAllAssignments();
-                String jsonResponse = objectMapper.writeValueAsString(assignments);
+                /*
+                 * Бүх assignment-ийг domain -> DTO list болгон хөрвүүлээд
+                 * JSON array байдлаар буцаана.
+                 */
+                List<AssignmentDto> dtos = assignmentService.getAllAssignments()
+                        .stream()
+                        .map(AssignmentDto::new)
+                        .collect(Collectors.toList());
 
                 response.setStatus(HttpServletResponse.SC_OK);
-                response.getWriter().write(jsonResponse);
+                response.getWriter().write(objectMapper.writeValueAsString(dtos));
                 return;
             }
 
-            /*
-             * Хэрэв pathInfo дотор /{id} хэлбэрээр ирсэн бол:
-             * GET /api/assignments/5
-             *
-             * Leading slash-ийг авч id болгон parse хийнэ.
-             */
             String idText = pathInfo.substring(1);
             Long id = Long.parseLong(idText);
 
             Assignment assignment = assignmentService.getAssignmentById(id);
 
-            if (assignment != null) {
-                String jsonResponse = objectMapper.writeValueAsString(assignment);
-
-                response.setStatus(HttpServletResponse.SC_OK);
-                response.getWriter().write(jsonResponse);
-            } else {
-                /*
-                 * ID байхгүй бол 404 буцаана.
-                 */
+            if (assignment == null) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                return;
             }
 
+            AssignmentDto dto = new AssignmentDto(assignment);
+
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().write(objectMapper.writeValueAsString(dto));
+
         } catch (NumberFormatException e) {
-            /*
-             * Path дотор байгаа ID тоо биш байвал client-ийн хүсэлт буруу байна.
-             */
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         } catch (IllegalArgumentException e) {
-            /*
-             * Service layer "assignment олдсонгүй" гэх мэт validation/error өгч болно.
-             */
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         } catch (Exception e) {
-            /*
-             * Бусад бүх unexpected error-д 500 буцаана.
-             */
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
@@ -124,16 +116,8 @@ public class AssignmentApiServlet extends HttpServlet {
     /**
      * POST /api/assignments
      *
-     * Client-ээс ирсэн JSON body-г Assignment object болгон хувиргаж,
-     * service-ээр дамжуулан хадгална.
-     *
-     * Жишээ JSON:
-     * {
-     *   "title": "Lab 11 API",
-     *   "studentId": "22B1NUM001",
-     *   "courseCode": "ICSI486",
-     *   "description": "REST API test"
-     * }
+     * Project 1 requirement-ийн дагуу mutating API route-ууд хамгаалагдсан байх ёстой.
+     * Login хийгээгүй хэрэглэгч create хийх гэж оролдвол 401 Unauthorized буцаана.
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -142,48 +126,44 @@ public class AssignmentApiServlet extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
+        /*
+         * API create route хамгаалалт:
+         * web UI шиг redirect хийхгүй.
+         * API client-д machine-readable HTTP status code буцаах ёстой.
+         */
+        HttpSession session = request.getSession(false);
+
+        if (session == null || session.getAttribute("loggedInUser") == null) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
+
         try {
             /*
-             * Request body доторх JSON-ийг Jackson ашиглан Assignment object болгоно.
-             *
-             * Энэ алхамд JSON field name-ууд нь Assignment class-ийн
-             * property нэрүүдтэй таарч байх ёстой.
+             * Client-ээс ирсэн JSON payload-ийг эхлээд DTO болгон уншина.
+             * Ингэснээр API contract domain class-аас салангид байна.
              */
-            Assignment newAssignment =
-                    objectMapper.readValue(request.getInputStream(), Assignment.class);
+            AssignmentDto requestDto =
+                    objectMapper.readValue(request.getInputStream(), AssignmentDto.class);
 
-            /*
-             * Core/service layer дээр create logic болон validation ажиллана.
-             */
+            Assignment newAssignment = requestDto.toDomain();
             assignmentService.createAssignment(newAssignment);
 
             /*
-             * REST API дээр шинэ объект амжилттай үүссэн бол
-             * 201 Created status code буцаана.
+             * Service layer save хийсний дараа domain object дотор id, status зэрэг
+             * шинэ утгууд орж ирсэн байж болно.
+             * Тиймээс response-д domain -> DTO болгож буцаана.
              */
-            response.setStatus(HttpServletResponse.SC_CREATED);
+            AssignmentDto responseDto = new AssignmentDto(newAssignment);
 
-            /*
-             * Шинээр үүссэн object-ийг буцааж JSON-р явуулж болно.
-             * Ингэснээр client generated id зэрэг шинэ утгуудыг шууд харж чадна.
-             */
-            response.getWriter().write(objectMapper.writeValueAsString(newAssignment));
+            response.setStatus(HttpServletResponse.SC_CREATED);
+            response.getWriter().write(objectMapper.writeValueAsString(responseDto));
 
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-            /*
-             * JSON format буруу бол 400 Bad Request буцаана.
-             * Энэ нь Lab 11-ийн чухал error-handling requirement.
-             */
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         } catch (IllegalArgumentException e) {
-            /*
-             * Service validation failed бол мөн client-ийн хүсэлт буруу гэж үзэж 400 буцаана.
-             */
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         } catch (Exception e) {
-            /*
-             * Бусад unexpected error-д 500 буцаана.
-             */
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
