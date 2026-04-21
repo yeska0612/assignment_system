@@ -5,7 +5,13 @@ import java.util.List;
 import mn.edu.num.assignmentsystem.core.domain.Assignment;
 
 /**
- * Assignment хадгалах repository interface.
+ * Assignment өгөгдлийг хадгалах persistence boundary.
+ *
+ * Core layer нь өгөгдлийг яг хаана, яаж хадгалагдаж байгааг мэдэхгүй.
+ * Харин энэ interface-ээр дамжуулж repository-той ажиллана.
+ *
+ * Ингэснээр бид InMemory, JDBC, эсвэл цаашдаа өөр persistence
+ * implementation-уудыг core логикт өөрчлөлтгүйгээр сольж ашиглаж чадна.
  */
 public interface IAssignmentRepository {
 

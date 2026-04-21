@@ -10,12 +10,16 @@ import mn.edu.num.assignmentsystem.core.domain.Assignment;
 /**
  * Assignment-уудыг JTable дээр харуулах table model.
  *
- * Энэ класс нь Assignment object-уудыг
- * хүснэгтийн мөр, багана болгон хөрвүүлнэ.
+ * Энэ класс нь domain layer-оос ирсэн Assignment объектуудыг
+ * Swing-ийн JTable ойлгох мөр, баганын бүтэц рүү хөрвүүлдэг adapter юм.
+ *
+ * Өөрөөр хэлбэл UI нь List<Assignment>-ийг шууд зурахгүй.
+ * Харин AbstractTableModel-оор дамжуулж хэдэн мөртэй, хэдэн баганатай,
+ * тухайн нүдэнд ямар утга харагдахыг тодорхойлно.
  */
 public class AssignmentTableModel extends AbstractTableModel {
 
-    /** Хүснэгтийн баганын нэрс */
+    /** JTable дээр харагдах баганын нэрс */
     private final String[] columnNames = {
             "ID",
             "Title",
@@ -27,20 +31,25 @@ public class AssignmentTableModel extends AbstractTableModel {
             "Score"
     };
 
-    /** Хүснэгтэд харагдах assignment жагсаалт */
+    /** Хүснэгтэд харуулах assignment жагсаалт */
     private List<Assignment> assignments;
 
     /**
-     * Анх хоосон жагсаалттай model үүсгэнэ.
+     * Анх хоосон model үүсгэнэ.
+     *
+     * UI анх ачаалагдах үед хүснэгт хоосон байж болно.
+     * Дараа нь service-ээс өгөгдөл ачаалаад setAssignments(...) дуудаж шинэчилнэ.
      */
     public AssignmentTableModel() {
         this.assignments = new ArrayList<>();
     }
 
     /**
-     * Хүснэгтийн өгөгдлийг шинэчилнэ.
+     * JTable дээр харагдах өгөгдлийн эх үүсвэрийг шинэчилнэ.
      *
-     * @param assignments шинэ assignment жагсаалт
+     * fireTableDataChanged() дуудах нь Swing-д
+     * "хүснэгтийн өгөгдөл өөрчлөгдсөн" гэдгийг мэдэгдэж,
+     * дэлгэцэн дээрх table-ийг шууд refresh хийхэд хэрэгтэй.
      */
     public void setAssignments(List<Assignment> assignments) {
         if (assignments == null) {
@@ -48,14 +57,15 @@ public class AssignmentTableModel extends AbstractTableModel {
         } else {
             this.assignments = assignments;
         }
+
         fireTableDataChanged();
     }
 
     /**
-     * Тухайн мөрөнд байгаа assignment-ийг буцаана.
+     * Тухайн мөрөнд харгалзах Assignment объектыг буцаана.
      *
-     * @param rowIndex мөрийн индекс
-     * @return Assignment объект
+     * Энэ method нь row selection хийсний дараа update / submit / grade /
+     * delete зэрэг үйлдэл хийхэд сонгогдсон мөрийн арын domain объектыг авахад хэрэгтэй.
      */
     public Assignment getAssignmentAt(int rowIndex) {
         if (rowIndex < 0 || rowIndex >= assignments.size()) {
@@ -93,9 +103,6 @@ public class AssignmentTableModel extends AbstractTableModel {
             case 3:
                 return assignment.getCourseCode();
             case 4:
-                if (assignment.getFeedback() != null && !assignment.getFeedback().isBlank()) {
-                    return assignment.getFeedback();
-                }
                 return assignment.getDescription() == null ? "" : assignment.getDescription();
             case 5:
                 return assignment.getSubmissionDate() == null ? "" : assignment.getSubmissionDate();

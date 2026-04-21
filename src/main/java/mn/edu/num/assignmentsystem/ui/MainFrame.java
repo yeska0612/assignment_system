@@ -23,13 +23,12 @@ import mn.edu.num.assignmentsystem.core.domain.AssignmentStatus;
  * Assignment системийн үндсэн UI цонх.
  *
  * Энэ класс нь:
- * - assignment жагсаалтыг хүснэгтээр харуулах
- * - шинэ assignment нэмэх
- * - хүснэгтээс мөр сонгоход form дээр мэдээлэл гаргах
- * - DRAFT assignment шинэчлэх
- * - submit / grade / reject / delete үйлдэл хийх
- * - button-уудын идэвхийг status-аас хамааруулж тохируулах
- * үүрэгтэй.
+ * assignment жагсаалтыг хүснэгтээр харуулах
+ * шинэ assignment нэмэх
+ * хүснэгтээс мөр сонгоход form дээр мэдээлэл гаргах
+ * DRAFT assignment шинэчлэх
+ * submit / grade / reject / delete үйлдэл хийх
+ * button-уудын идэвхийг status-аас хамааруулж тохируулах үүрэгтэй.
  */
 public class MainFrame extends JFrame {
 
@@ -80,8 +79,6 @@ public class MainFrame extends JFrame {
 
     /**
      * Constructor.
-     *
-     * @param assignmentService service layer
      */
     public MainFrame(AssignmentService assignmentService) {
         this.assignmentService = assignmentService;
@@ -125,8 +122,7 @@ public class MainFrame extends JFrame {
         courseCodeField = new JTextField(12);
         descriptionField = new JTextField(20);
 
-        // Description-ийг edit хийхгүй, зөвхөн харуулна
-        descriptionField.setEditable(false);
+        descriptionField.setEditable(true);
 
         // Товчнууд
         addButton = new JButton("Create Assignment");
@@ -200,7 +196,13 @@ public class MainFrame extends JFrame {
     }
 
     /**
-     * Assignment жагсаалтыг service-ээс авч хүснэгтэд харуулна.
+     * Service layer-оос бүх assignment-ийг авч JTable дээр харуулна.
+     *
+     * Энэ method нь:
+     * - application эхлэх үед
+     * - refresh дарахад
+     * - create / update / submit / grade / reject / delete хийсний дараа
+     * хүснэгтийг дахин ачаалахад ашиглагдана.
      */
     private void loadAssignments() {
         try {

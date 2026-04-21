@@ -3,40 +3,35 @@ package mn.edu.num.assignmentsystem.core.domain;
 import java.time.LocalDate;
 
 /**
- * Оюутны даалгаврын entity класс.
+ * Оюутны даалгаврыг илэрхийлэх үндсэн domain entity.
+ *
+ * Энэ класс нь assignment-ийн өгөгдөл болон workflow-д оролцох
+ * үндсэн төлөв мэдээллүүдийг хадгална.
+ *
+ * Жишээлбэл:
+ * - эхлээд DRAFT төлөвтэй үүснэ
+ * - дараа нь SUBMITTED болж илгээгдэнэ
+ * - эцэст нь GRADED эсвэл REJECTED төлөвт шилжинэ
  */
 public class Assignment {
-
-    /** Assignment-ийн давтагдашгүй ID */
     private Long id;
 
-    /** Даалгаврын гарчиг */
     private String title;
 
-    /** Оюутны код */
     private String studentId;
 
-    /** Хичээлийн код */
     private String courseCode;
 
-    /** Даалгаврын тайлбар */
     private String description;
 
-    /** Илгээсэн огноо */
     private LocalDate submissionDate;
 
-    /** Төлөв */
     private AssignmentStatus status;
 
-    /** Оноо */
     private Double score;
 
-    /** Багшийн тайлбар */
     private String feedback;
 
-    /**
-     * Параметргүй байгуулагч.
-     */
     public Assignment() {
         this.status = AssignmentStatus.DRAFT;
     }

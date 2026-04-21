@@ -9,13 +9,13 @@ import mn.edu.num.assignmentsystem.core.ports.IAssignmentRepository;
 
 /**
  * Assignment-тэй холбоотой бизнес логикыг хариуцна.
- * - шинэ assignment үүсгэх
- * - assignment шинэчлэх
- * - assignment устгах
- * - assignment submit хийх
- * - assignment grade хийх
- * - бүх assignment жагсаалт авах
- * - ID-аар assignment авах
+ * шинэ assignment үүсгэх
+ * assignment шинэчлэх
+ * assignment устгах
+ * assignment submit хийх
+ * assignment grade хийх
+ * бүх assignment жагсаалт авах
+ * ID-аар assignment авах
  */
 public class AssignmentService {
 
