@@ -1,13 +1,13 @@
 package mn.edu.num.assignmentsystem.core.domain;
 
 /**
- * UserRole enum нь систем доторх хэрэглэгчийн эрхийн түвшинг илэрхийлнэ.
+ * UserRole enum нь системийн хэрэглэгчийн эрхийн түвшинг илэрхийлнэ.
  *
- * Энэ project дээр role-based authorization бүрэн нэвтрээгүй ч
- * domain model requirement-г хангахын тулд role-г тусад нь тодорхойлж байна.
+ * Энэ project дээр бид хоёр үндсэн role ашиглаж байна:
+ * - TEACHER: даалгавар үүсгэх, засах, устгах, үнэлэх
+ * - STUDENT: зөвхөн өөрийн даалгаврыг харах, submit хийх
  */
 public enum UserRole {
-    ADMIN,
-    STUDENT,
-    TEACHER
+    TEACHER,
+    STUDENT
 }

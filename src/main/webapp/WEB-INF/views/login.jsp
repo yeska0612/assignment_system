@@ -33,8 +33,9 @@
     </form>
 
     <p style="margin-top:15px;">
-        Demo account: <strong>admin</strong> / <strong>password123</strong>
-    </p>
+   		Teacher account: <strong>teacher</strong> / <strong>password123</strong><br>
+    	Student account: <strong>student</strong> / <strong>password123</strong>
+	</p>
 
 </body>
 </html>

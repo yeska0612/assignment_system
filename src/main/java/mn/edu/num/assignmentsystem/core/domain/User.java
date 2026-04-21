@@ -3,9 +3,8 @@ package mn.edu.num.assignmentsystem.core.domain;
 /**
  * User domain model нь системийн хэрэглэгчийг илэрхийлнэ.
  *
- * Одоогоор authentication demo горимоор hardcoded username/password ашиглаж байгаа ч
- * энэ entity нь цаашдаа DB-based authentication болон role-based authorization-д
- * суурь болж өгнө.
+ * Одоогоор authentication нь demo хэлбэрээр hardcoded байгаа ч
+ * энэ класс нь role-based authorization хийхэд суурь болж өгнө.
  */
 public class User {
 

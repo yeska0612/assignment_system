@@ -12,17 +12,16 @@ import jakarta.servlet.http.HttpSession;
 
 import mn.edu.num.assignmentsystem.core.application.AssignmentService;
 import mn.edu.num.assignmentsystem.core.domain.Assignment;
+import mn.edu.num.assignmentsystem.core.domain.UserRole;
 import mn.edu.num.assignmentsystem.core.ports.IAssignmentRepository;
 import mn.edu.num.assignmentsystem.infrastructure.persistence.RepositoryFactory;
 
 /**
  * DashboardServlet нь login хийсэн хэрэглэгчийн хамгаалагдсан dashboard-ийг хариуцна.
  *
- * Энэ servlet нь хоёр чухал үүрэгтэй:
- * 1. Session дээр хэрэглэгч login хийсэн эсэхийг шалгана
- * 2. Login хийсэн бол assignment жагсаалтыг ачаалж JSP view рүү дамжуулна
- *
- * "Bouncer pattern"
+ * Энэ өргөтгөсөн хувилбар дээр dashboard нь role-aware ажиллана:
+ * - TEACHER -> бүх assignment харна
+ * - STUDENT -> зөвхөн өөрийн assignment-уудыг харна
  */
 @WebServlet("/dashboard")
 public class DashboardServlet extends HttpServlet {
@@ -31,9 +30,6 @@ public class DashboardServlet extends HttpServlet {
 
     private AssignmentService assignmentService;
 
-    /**
-     * Servlet анх ачаалагдах үед service-ийг factory-аар үүсгэнэ.
-     */
     @Override
     public void init() throws ServletException {
         IAssignmentRepository repository = RepositoryFactory.createRepository();
@@ -43,48 +39,61 @@ public class DashboardServlet extends HttpServlet {
     /**
      * GET /dashboard
      *
-     * Хамгаалагдсан route.
-     * Session дээр loggedInUser attribute байхгүй бол login page руу шууд буцаана.
-     * Байвал dashboard view-г ачаална.
+     * Session байхгүй бол login руу буцаана.
+     * Session байвал role-аас хамааран тохирох өгөгдлийг dashboard view рүү дамжуулна.
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        /*
-         * Session-ийг авна.
-         * getSession(false) ашиглаж болох ч starter-д getSession() санааг үзүүлсэн.
-         * Энд аль аль нь боломжтой. Бид илүү хамгаалалттай байдлаар false ашиглаж болно.
-         */
         HttpSession session = request.getSession(false);
 
         /*
          * --- THE BOUNCER ---
-         * Хэрэв session байхгүй эсвэл loggedInUser байхгүй бол
-         * хэрэглэгч authentication хийгээгүй гэсэн үг.
-         * Тиймээс protected page үзүүлэхгүй, login page руу буцаана.
+         * Login хийгээгүй хэрэглэгч protected dashboard үзэх эрхгүй.
          */
         if (session == null || session.getAttribute("loggedInUser") == null) {
             response.sendRedirect(request.getContextPath() + "/login");
-            return; // Маш чухал: эндээс цааш logic ажиллах ёсгүй
+            return;
         }
 
-        /*
-         * Хэрэв энэ мөрөнд хүрсэн бол хэрэглэгч login хийсэн байна.
-         * Session дээр хадгалсан username-ийг авч welcome message бэлдэнэ.
-         */
         String currentUser = (String) session.getAttribute("loggedInUser");
+        String role = (String) session.getAttribute("role");
+
         request.setAttribute("welcomeMessage", "Welcome back, " + currentUser);
+        request.setAttribute("role", role);
+
+        List<Assignment> assignments;
 
         /*
-         * Dashboard дээр харуулах assignment өгөгдлийг service-ээс авна.
+         * Teacher dashboard:
+         * Бүх assignment-уудыг харуулна.
          */
-        List<Assignment> assignments = assignmentService.getAllAssignments();
+        if (UserRole.TEACHER.name().equals(role)) {
+            assignments = assignmentService.getAllAssignments();
+            request.setAttribute("dashboardTitle", "Teacher Dashboard");
+        }
+        /*
+         * Student dashboard:
+         * Зөвхөн тухайн studentId-д хамаарах assignment-уудыг харуулна.
+         */
+        else if (UserRole.STUDENT.name().equals(role)) {
+            String studentId = (String) session.getAttribute("studentId");
+            assignments = assignmentService.getAssignmentsByStudentId(studentId);
+            request.setAttribute("dashboardTitle", "Student Dashboard");
+            request.setAttribute("studentId", studentId);
+        }
+        /*
+         * Role байхгүй эсвэл танигдахгүй бол login руу буцаана.
+         * Энэ нь session state эвдэрсэн нөхцөлөөс хамгаална.
+         */
+        else {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+
         request.setAttribute("assignmentList", assignments);
 
-        /*
-         * Хамгаалагдсан JSP view рүү forward хийнэ.
-         */
         request.getRequestDispatcher("/WEB-INF/views/dashboard.jsp")
                .forward(request, response);
     }

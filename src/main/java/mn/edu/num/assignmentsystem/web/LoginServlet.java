@@ -9,12 +9,17 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import mn.edu.num.assignmentsystem.core.domain.UserRole;
+
 /**
  * LoginServlet нь authentication flow-ийн controller юм.
  *
- * Энэ sprint дээр authentication-ийг энгийн hardcoded байдлаар хийж байна:
- * username = admin
- * password = password123
+ * Энэ өргөтгөсөн хувилбар дээр бид хоёр role-той demo account ашиглаж байна:
+ * - teacher / password123
+ * - student / password123
+ *
+ * Ингэснээр session дээр зөвхөн username биш,
+ * role мэдээллийг мөн хадгалж role-based UI болон authorization хийх боломжтой болно.
  */
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
@@ -24,7 +29,7 @@ public class LoginServlet extends HttpServlet {
     /**
      * GET /login
      *
-     * Хэрэглэгч login page нээхэд form-ыг JSP view рүү forward хийнэ.
+     * Хэрэглэгч login form харах үед JSP view рүү forward хийнэ.
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -37,41 +42,59 @@ public class LoginServlet extends HttpServlet {
     /**
      * POST /login
      *
-     * Browser-оос ирсэн username, password-ийг шалгана.
-     * Хэрэв зөв бол session дээр loggedInUser хадгалж dashboard руу redirect хийнэ.
-     * Хэрэв буруу бол login page руу error=true query parameter-тай буцаана.
+     * Username/password-ийг шалгаж, session дээр:
+     * - loggedInUser
+     * - role
+     * - studentId (хэрэв student бол)
+     * мэдээллийг хадгална.
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        String user = request.getParameter("username");
-        String pass = request.getParameter("password");
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+
+        HttpSession session;
 
         /*
-         * Энэ sprint дээр hardcoded check ашиглаж байгаа.
-         * Core-ийг өөрчлөхгүйгээр web authentication flow-оо эхлээд туршиж байна.
+         * Teacher login:
+         * Teacher нь assignment үүсгэх, засах, устгах, үнэлэх эрхтэй.
          */
-        if ("admin".equals(user) && "password123".equals(pass)) {
+        if ("teacher".equals(username) && "password123".equals(password)) {
+            session = request.getSession();
+            session.setAttribute("loggedInUser", username);
+            session.setAttribute("role", UserRole.TEACHER.name());
 
-            /*
-             * request.getSession() дуудахад:
-             * - session байхгүй бол шинээр үүсгэнэ
-             * - байвал одоо байгаа session-ийг өгнө
-            */
-            HttpSession session = request.getSession();
-            session.setAttribute("loggedInUser", user);
-
-            /*
-             * Амжилттай login хийсний дараа dashboard руу redirect хийнэ.
-             */
             response.sendRedirect(request.getContextPath() + "/dashboard");
-        } else {
-            /*
-             * Буруу credential үед session үүсгэхгүй.
-             * Зөвхөн login page руу error flag-тай буцаана.
-             */
-            response.sendRedirect(request.getContextPath() + "/login?error=true");
+            return;
         }
+
+        /*
+         * Student login:
+         * Student нь зөвхөн өөрийн assignment-уудыг харах ба submit хийх эрхтэй.
+         *
+         * Demo зорилгоор studentId-г session дээр хадгалж байна.
+         * Энэ нь assignment.studentId талбартай таарч filter хийхэд ашиглагдана.
+         */
+        if ("student".equals(username) && "password123".equals(password)) {
+            session = request.getSession();
+            session.setAttribute("loggedInUser", username);
+            session.setAttribute("role", UserRole.STUDENT.name());
+
+            /*
+             * Demo user-д харгалзах student ID.
+             * Цаашдаа энэ утгыг database-based user profile-оос авч болно.
+             */
+            session.setAttribute("studentId", "23B1NUM1004");
+
+            response.sendRedirect(request.getContextPath() + "/dashboard");
+            return;
+        }
+
+        /*
+         * Credential буруу бол login page руу error flag-тай буцаана.
+         */
+        response.sendRedirect(request.getContextPath() + "/login?error=true");
     }
 }

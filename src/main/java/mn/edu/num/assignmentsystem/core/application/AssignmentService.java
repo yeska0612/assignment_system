@@ -204,4 +204,21 @@ public class AssignmentService {
 
         return assignment;
     }
+    
+    /**
+     * Тодорхой оюутанд хамаарах assignment-уудыг буцаана.
+     *
+     * Энэ method нь student dashboard дээр зөвхөн тухайн хэрэглэгчийн
+     * өөрийн даалгавруудыг харуулахад ашиглагдана.
+     */
+    public List<Assignment> getAssignmentsByStudentId(String studentId) {
+        if (studentId == null || studentId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Student ID хоосон байж болохгүй.");
+        }
+
+        return assignmentRepository.findAll()
+                .stream()
+                .filter(a -> studentId.equals(a.getStudentId()))
+                .toList();
+    }
 }
