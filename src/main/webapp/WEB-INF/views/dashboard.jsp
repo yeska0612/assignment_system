@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.List" %>
 <%@ page import="mn.edu.num.assignmentsystem.core.domain.Assignment" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
 <html>
 <head>
