@@ -7,6 +7,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import mn.edu.num.assignmentsystem.core.application.AssignmentService;
 import mn.edu.num.assignmentsystem.core.ports.IAssignmentRepository;
@@ -17,7 +18,9 @@ import mn.edu.num.assignmentsystem.infrastructure.persistence.RepositoryFactory;
  *
  * Delete үйлдлийг GET линкээр хийхгүй.
  * Харин hidden input бүхий form-оор POST хүсэлт авч ажиллуулна.
- * Энэ нь Lab 09-ийн security requirement-тэй нийцнэ.
+ *
+ * Мөн энэ үйлдэл нь data mutation тул зөвхөн login хийсэн
+ * хэрэглэгчид зөвшөөрөгдөнө.
  */
 @WebServlet("/delete-assignment")
 public class AssignmentDeleteServlet extends HttpServlet {
@@ -40,11 +43,22 @@ public class AssignmentDeleteServlet extends HttpServlet {
      * POST /delete-assignment
      *
      * Hidden input-аар дамжиж ирсэн assignmentId-г авч,
-     * тухайн assignment-ийг устгаад дахин assignments page рүү redirect хийнэ.
+     * тухайн assignment-ийг устгаад dashboard руу redirect хийнэ.
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+
+        /*
+         * Delete хийх нь data mutation үйлдэл тул
+         * зөвхөн authenticated хэрэглэгчид зөвшөөрнө.
+         */
+        HttpSession session = request.getSession(false);
+
+        if (session == null || session.getAttribute("loggedInUser") == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
 
         String assignmentIdText = request.getParameter("assignmentId");
 
@@ -53,10 +67,10 @@ public class AssignmentDeleteServlet extends HttpServlet {
             assignmentService.deleteAssignment(assignmentId);
 
             /*
-             * Delete хийсний дараа мөн PRG зарчим баримталж
-             * list page рүү redirect хийнэ.
+             * Delete хийсний дараа dashboard руу redirect хийнэ.
+             * Ингэснээр browser дахин цэвэр GET request хийж page-ээ ачаална.
              */
-            response.sendRedirect(request.getContextPath() + "/assignments");
+            response.sendRedirect(request.getContextPath() + "/dashboard");
 
         } catch (NumberFormatException e) {
             response.sendError(
