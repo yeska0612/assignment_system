@@ -81,11 +81,6 @@ public class LoginServlet extends HttpServlet {
             session = request.getSession();
             session.setAttribute("loggedInUser", username);
             session.setAttribute("role", UserRole.STUDENT.name());
-
-            /*
-             * Demo user-д харгалзах student ID.
-             * Цаашдаа энэ утгыг database-based user profile-оос авч болно.
-             */
             session.setAttribute("studentId", "23B1NUM1004");
 
             response.sendRedirect(request.getContextPath() + "/dashboard");

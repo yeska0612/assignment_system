@@ -9,7 +9,6 @@
 <div class="login-shell">
     <div class="login-card">
         <h2 class="login-title">Assignment System</h2>
-        <p class="login-subtitle">Sign in to continue</p>
 
         <%
             String error = request.getParameter("error");
@@ -39,7 +38,7 @@
         </form>
 
         <div class="credentials-box">
-            <strong>Demo accounts</strong><br><br>
+            <strong>Accounts</strong><br><br>
             Teacher: <strong>teacher</strong> / <strong>password12345</strong><br>
             Student: <strong>student</strong> / <strong>password1234</strong>
         </div>
