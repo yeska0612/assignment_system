@@ -67,27 +67,34 @@ public class DatabaseConnection {
     /**
      * database.properties файлаас тохиргоо уншина.
      */
-    private void loadProperties() {
-        Properties properties = new Properties();
-
+    private static void loadProperties() {
         try (InputStream inputStream =
-                     getClass().getClassLoader().getResourceAsStream("database.properties")) {
+                     DatabaseConnection.class.getClassLoader().getResourceAsStream("database.properties")) {
 
-            if (inputStream == null) {
-                throw new RuntimeException("database.properties файл олдсонгүй.");
+            Properties properties = new Properties();
+
+            if (inputStream != null) {
+                properties.load(inputStream);
             }
 
-            properties.load(inputStream);
+            driver = getConfigValue("DB_DRIVER", properties.getProperty("db.driver"));
+            url = getConfigValue("DB_URL", properties.getProperty("db.url"));
+            user = getConfigValue("DB_USER", properties.getProperty("db.user"));
+            password = getConfigValue("DB_PASSWORD", properties.getProperty("db.password"));
 
-            this.persistenceMode = properties.getProperty("app.persistence.mode");
-            this.driver = properties.getProperty("db.driver");
-            this.url = properties.getProperty("db.url");
-            this.user = properties.getProperty("db.user");
-            this.password = properties.getProperty("db.password");
-
-        } catch (IOException e) {
-            throw new RuntimeException("database.properties файлыг унших үед алдаа гарлаа.", e);
+        } catch (Exception e) {
+            throw new RuntimeException("Database properties уншихад алдаа гарлаа.", e);
         }
+    }
+
+    private static String getConfigValue(String envName, String defaultValue) {
+        String envValue = System.getenv(envName);
+
+        if (envValue != null && !envValue.trim().isEmpty()) {
+            return envValue;
+        }
+
+        return defaultValue;
     }
 
     /**

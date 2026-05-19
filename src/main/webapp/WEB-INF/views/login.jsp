@@ -37,11 +37,6 @@
             </div>
         </form>
 
-        <div class="credentials-box">
-            <strong>Accounts</strong><br><br>
-            Teacher: <strong>teacher</strong> / <strong>password12345</strong><br>
-            Student: <strong>student</strong> / <strong>password1234</strong>
-        </div>
     </div>
 </div>
 
