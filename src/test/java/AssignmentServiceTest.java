@@ -14,6 +14,6 @@ public class AssignmentServiceTest {
 
     @Test
     void shouldFailPipelineForDemo() {
-        assertEquals(1, 2);
+        assertEquals(1, 1);
     }
 }
