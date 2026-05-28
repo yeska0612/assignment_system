@@ -32,10 +32,20 @@ public class DashboardServlet extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
-        IAssignmentRepository repository = RepositoryFactory.createRepository();
-        this.assignmentService = new AssignmentService(repository);
-    }
+        try {
+            IAssignmentRepository repository =
+                    RepositoryFactory.createRepository();
 
+            this.assignmentService =
+                    new AssignmentService(repository);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            throw new ServletException(
+                    "DashboardServlet init failed", e);
+        }
+    }
     /**
      * GET /dashboard
      *
@@ -63,38 +73,52 @@ public class DashboardServlet extends HttpServlet {
         request.setAttribute("welcomeMessage", "Welcome back, " + currentUser);
         request.setAttribute("role", role);
 
-        List<Assignment> assignments;
+        try {
+            List<Assignment> assignments;
 
-        /*
-         * Teacher dashboard:
-         * Бүх assignment-уудыг харуулна.
-         */
-        if (UserRole.TEACHER.name().equals(role)) {
-            assignments = assignmentService.getAllAssignments();
-            request.setAttribute("dashboardTitle", "Teacher Dashboard");
-        }
-        /*
-         * Student dashboard:
-         * Зөвхөн тухайн studentId-д хамаарах assignment-уудыг харуулна.
-         */
-        else if (UserRole.STUDENT.name().equals(role)) {
-            String studentId = (String) session.getAttribute("studentId");
-            assignments = assignmentService.getAssignmentsByStudentId(studentId);
-            request.setAttribute("dashboardTitle", "Student Dashboard");
-            request.setAttribute("studentId", studentId);
-        }
-        /*
-         * Role байхгүй эсвэл танигдахгүй бол login руу буцаана.
-         * Энэ нь session state эвдэрсэн нөхцөлөөс хамгаална.
-         */
-        else {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
+            /*
+             * Teacher dashboard:
+             * Бүх assignment-уудыг харуулна.
+             */
+            if (UserRole.TEACHER.name().equals(role)) {
+                assignments = assignmentService.getAllAssignments();
+                request.setAttribute("dashboardTitle", "Teacher Dashboard");
+            }
+            /*
+             * Student dashboard:
+             * Зөвхөн тухайн studentId-д хамаарах assignment-уудыг харуулна.
+             */
+            else if (UserRole.STUDENT.name().equals(role)) {
+                String studentId = (String) session.getAttribute("studentId");
+                assignments = assignmentService.getAssignmentsByStudentId(studentId);
+                request.setAttribute("dashboardTitle", "Student Dashboard");
+                request.setAttribute("studentId", studentId);
+            }
+            /*
+             * Role байхгүй эсвэл танигдахгүй бол login руу буцаана.
+             */
+            else {
+                response.sendRedirect(request.getContextPath() + "/login");
+                return;
+            }
 
-        request.setAttribute("assignmentList", assignments);
+            request.setAttribute("assignmentList", assignments);
 
-        request.getRequestDispatcher("/WEB-INF/views/dashboard.jsp")
-               .forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/dashboard.jsp")
+                   .forward(request, response);
+
+        } catch (Exception e) {
+            /*
+             * Docker container дотор runtime exception гарахад
+             * яг ямар repository/schema/SQL дээр унасныг docker logs дээр харахын тулд
+             * түр хугацаанд stacktrace хэвлэж байна.
+             */
+            e.printStackTrace();
+
+            request.setAttribute("errorMessage", e.getMessage());
+
+            request.getRequestDispatcher("/error.jsp")
+                   .forward(request, response);
+        }
     }
 }

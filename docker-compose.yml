@@ -1,0 +1,30 @@
+services:
+  assignment-db:
+    image: postgres:15-alpine
+    container_name: assignment_postgres
+    environment:
+      POSTGRES_USER: "admin"
+      POSTGRES_PASSWORD: "secretpassword"
+      POSTGRES_DB: "assignment_system"
+    ports:
+      - "5432:5432"
+    volumes:
+      - assignment_pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  assignment-app:
+    build: .
+    container_name: assignment_backend
+    ports:
+      - "8080:8080"
+    environment:
+      APP_PERSISTENCE_MODE: "DB"
+      DB_DRIVER: "org.postgresql.Driver"
+      DB_URL: "jdbc:postgresql://assignment-db:5432/assignment_system"
+      DB_USER: "admin"
+      DB_PASSWORD: "secretpassword"
+    depends_on:
+      - assignment-db
+
+volumes:
+  assignment_pgdata:

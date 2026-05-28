@@ -31,10 +31,10 @@ public class DatabaseConnection {
 
     /** Config мэдээллүүд */
     private String persistenceMode;
-    private String driver;
-    private String url;
-    private String user;
-    private String password;
+    private static String driver;
+    private static String url;
+    private static String user;
+    private static String password;
 
     /**
      * Private constructor.
@@ -117,11 +117,21 @@ public class DatabaseConnection {
      */
     public Connection getConnection() {
         try {
+
+            /*
+             * PostgreSQL JDBC driver-ийг explicit load хийж байна.
+             * Docker + Tomcat орчинд автоматаар driver register болохгүй
+             * тохиолдол байдаг тул Class.forName ашиглаж байна.
+             */
+            Class.forName(driver);
+
             if (connection == null || connection.isClosed()) {
                 connection = DriverManager.getConnection(url, user, password);
             }
+
             return connection;
-        } catch (SQLException e) {
+
+        } catch (Exception e) {
             throw new RuntimeException("Өгөгдлийн сантай холбогдох үед алдаа гарлаа.", e);
         }
     }
