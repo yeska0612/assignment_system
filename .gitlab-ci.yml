@@ -1,0 +1,48 @@
+stages:
+  - compile
+  - test
+  - package
+  - dockerize
+
+build-java:
+  stage: compile
+  image: maven:3.9.4-eclipse-temurin-17
+  script:
+    - echo "Compiling application..."
+    - mvn clean compile
+
+test-java:
+  stage: test
+  image: maven:3.9.4-eclipse-temurin-17
+  script:
+    - echo "Running JUnit tests..."
+    - mvn test
+
+package-app:
+  stage: package
+  image: maven:3.9.4-eclipse-temurin-17
+  script:
+    - echo "Packaging WAR file..."
+    - mvn package -DskipTests
+  artifacts:
+    paths:
+      - target/*.war
+    expire_in: 1 hour
+
+build-and-push-docker:
+  stage: dockerize
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  script:
+    - echo "Logging into GitLab Container Registry..."
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+
+    - echo "Building Docker image..."
+    - IMAGE_TAG=$CI_REGISTRY/$CI_PROJECT_PATH/student-assignment-system:latest
+    - docker build -t $IMAGE_TAG .
+
+    - echo "Pushing Docker image..."
+    - docker push $IMAGE_TAG
